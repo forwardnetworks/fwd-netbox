@@ -1,0 +1,14 @@
+---
+forward:
+  host: <fwd Enterprise URL>
+  authentication: Basic <basic auth b64enc here>
+  network_id: <Network id>
+  nqe:
+    devices_query_id: <NQE Query ID>
+    interfaces_query_id: <NQE Query ID>
+
+netbox:
+  host: <NetBox instance URL>
+  authentication: Token <auth token here>
+  device:
+    role: <Role ID>
