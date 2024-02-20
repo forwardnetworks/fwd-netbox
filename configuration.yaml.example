@@ -1,14 +1,22 @@
 ---
+# If set to True, the Python script asks for a confirmation to proceed with the devices and interfaces update in NetBox
+# If set to False, the script updates devices and interfaces in NetBox without asking for a confirmation
+interactive: False
+
 forward:
-  host: <fwd Enterprise URL>
-  authentication: Basic <basic auth b64enc here>
-  network_id: <Network id>
+  host: <fwd Enterprise URL>                      # For SaaS deployment set it to https://fwd.app
+  authentication: Basic <basic auth b64enc here>  # For details, refer to https://fwd.app/api-doc#authentication
+  network_id: <Network id>                        # You can find the network_id in the Forward UI URL
+                                                  # (e.g. https://fwd.app/?/search?networkId=170256)
   nqe:
-    devices_query_id: <NQE Query ID>
-    interfaces_query_id: <NQE Query ID>
+    # Do not change the NQE query IDs below unless you want to use your own NQE Queries and Python script
+    devices_query_id: FQ_837817437f52a25bcfb88fe2b789040af9d44daa
+    interfaces_query_id: FQ_97bcba26a420b4ed948bbd5d9c628e17150979e7
 
 netbox:
   host: <NetBox instance URL>
+  # For details about NetBox API Tokens, refer to https://demo.netbox.dev/static/docs/rest-api/authentication/#tokens
   authentication: Token <auth token here>
   device:
+    # NQE does not have the concept of Device Role. You need to create a Device Role in NetBox and add its ID here
     role: <Role ID>

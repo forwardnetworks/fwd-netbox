@@ -71,7 +71,7 @@ class NetboxAPI(ApiConnector):
         logging.debug("Patching devices in Netbox...")
         self._patch("/api/dcim/devices/", devices)
 
-    def add_device_list(self, devices):
+    def add_device_list(self, devices, interactive):
         """Add list of devices:
         This function gets a list of devices, it then
         iterates over the existing device list present
@@ -84,6 +84,7 @@ class NetboxAPI(ApiConnector):
 
         Keyword arguments:
         devices -- List of devices to add into Netbox.
+        interactive -- Flag to switch from interactive to automatic update
         """
         logging.debug("Adding a list of %d devices", len(devices))
         existing_devices = self.get_devices()["results"]
@@ -95,7 +96,26 @@ class NetboxAPI(ApiConnector):
                     device["id"] = existing_device["id"]
                     update_devices.append(device)
         create_devices = [device for device in devices if "id" not in device.keys()]
+
+        if len(create_devices):
+            print(f"The following ", len(create_devices), " devices will be created")
+            for device in create_devices:
+                print(device["name"])
+        if len(update_devices):
+            print(f"The following ", len(update_devices), " devices will be updated")
+            for device in update_devices:
+                print(device["name"])
+
+        if interactive is True:
+            print("Do you want to proceed? (yes/no) ")
+            user_input = input().lower()
+            if user_input != "yes":
+                exit
+
+        # Update existing devices
         self.patch_devices(update_devices)
+
+        # Create new Devices
         for device in create_devices:
             self.add_device(device)
 
@@ -110,12 +130,17 @@ class NetboxAPI(ApiConnector):
         self._patch("/api/dcim/interfaces/", interfaces)
 
     def add_interface_list(self, interfaces):
-        """Adds a list of interfaces, patches if already exists"""
-        logging.debug("Adding a list of %d devices", len(interfaces))
+        """Adds a list of interfaces, patches if already exists
+
+        Keyword arguments:
+        interfaces -- List of interfaces to add into Netbox.
+        """
+
+        logging.debug("Adding a list of %d interfaces", len(interfaces))
         existing_interfaces = self.get_interfaces()["results"]
         update_interfaces = []
         create_interfaces = []
-        print(interfaces)
+        logging.debug(interfaces)
         for interface in interfaces:
             for existing_interface in existing_interfaces:
                 if interface["name"] == existing_interface["name"]:
@@ -162,7 +187,11 @@ class NetboxAPI(ApiConnector):
     def adapt_forward_device_query(self, query):
         """Helper method to convert a device forward query into a Netbox Query"""
         sites = self._get_site_map_helper()
+        logging.debug("================= NetBox Sites =================")
+        logging.debug(sites)
         devices = self._get_device_map_helper()
+        logging.debug("================= NetBox Device Types =================")
+        logging.debug(devices)
         for entry in query:
             entry["device_type"] = devices[entry["device_type"]]
             if entry["site"] is not None:

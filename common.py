@@ -9,16 +9,18 @@ logging.basicConfig(level=logging.INFO)  # Set the default logging level to INFO
 
 def print_variables(config):
     """Debug function print all configuration variables"""
-    logging.debug("netbox_url: %s", config["netbox"]["host"])
-    logging.debug("netbox_auth_token: %s", config["netbox"]["authentication"])
-    logging.debug("fwd_url: %s", config["forward"]["host"])
-    logging.debug("fwd_snapshot_id: %s", config["forward"]["network_id"])
-    logging.debug("fwd_basic_auth: %s", config["forward"]["authentication"])
-    logging.debug("fwd_nqe_query_id: %s", config["forward"]["nqe"]["devices_query_id"])
-    logging.debug("fwd_nqe_query_id: %s", config["forward"]["nqe"]["interfaces_query_id"])
-    logging.debug("fwd_nqe_query_id: %s", config["netbox"]["host"])
-    logging.debug("fwd_nqe_query_id: %s", config["netbox"]["authentication"])
-    logging.debug("fwd_nqe_query_id: %s", config["netbox"]["device"]["role"])
+    logging.debug("======================== Configuration.yaml variables ========================")
+    logging.debug("Interactive: %s", config["interactive"])
+    logging.debug("Forward")
+    logging.debug("Host: %s", config["forward"]["host"])
+    logging.debug("authentication: %s", config["forward"]["authentication"])
+    logging.debug("network_id: %s", config["forward"]["network_id"])
+    logging.debug("devices_query_id: %s", config["forward"]["nqe"]["devices_query_id"])
+    logging.debug("interfaces_query_id: %s", config["forward"]["nqe"]["interfaces_query_id"])
+    logging.debug("NetBox:")
+    logging.debug("host: %s", config["netbox"]["host"])
+    logging.debug("authentication: %s", config["netbox"]["authentication"])
+    logging.debug("role: %s", config["netbox"]["device"]["role"])
 
 
 class ApiConnector:
@@ -29,8 +31,8 @@ class ApiConnector:
         self.host = host
         self.authentication = authentication
         self.http_headers = http_headers
-        self.ssl_verify = ssl_verify
         self.timeout = timeout
+        self.ssl_verify = ssl_verify
 
     def _request(self, method: str, path: str, headers, payload=None):
         """Generic HTTP method handler"""
