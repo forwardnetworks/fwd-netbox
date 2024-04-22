@@ -9,18 +9,35 @@ logging.basicConfig(level=logging.INFO)  # Set the default logging level to INFO
 
 def print_variables(config):
     """Debug function print all configuration variables"""
-    logging.debug("======================== Configuration.yaml variables ========================")
-    logging.debug("Interactive: %s", config["interactive"])
+    logging.debug("======================== Configuration.yaml variables")
+    logging.debug("Debug: {%s}", config["debug"])
+    logging.debug("add_sites: %s", config["add_sites"])
+    logging.debug("add_manufacturers: %s", config["add_manufacturers"])
+    logging.debug("add_device_roles: %s", config["add_device_roles"])
+    logging.debug("add_device_types: %s", config["add_device_types"])
+    logging.debug("add_devices: %s", config["add_devices"])
+    logging.debug("add_interfaces: %s", config["add_interfaces"])
     logging.debug("Forward")
     logging.debug("Host: %s", config["forward"]["host"])
     logging.debug("authentication: %s", config["forward"]["authentication"])
     logging.debug("network_id: %s", config["forward"]["network_id"])
+    logging.debug("locations_query_id: %s", config["forward"]["nqe"]["locations_query_id"])
+    logging.debug("vendors_query_id: %s", config["forward"]["nqe"]["vendors_query_id"])
+    logging.debug("device_roles_query_id: %s", config["forward"]["nqe"]["device_roles_query_id"])
+    logging.debug("device_types_query_id: %s", config["forward"]["nqe"]["device_types_query_id"])
     logging.debug("devices_query_id: %s", config["forward"]["nqe"]["devices_query_id"])
     logging.debug("interfaces_query_id: %s", config["forward"]["nqe"]["interfaces_query_id"])
     logging.debug("NetBox:")
     logging.debug("host: %s", config["netbox"]["host"])
     logging.debug("authentication: %s", config["netbox"]["authentication"])
-    logging.debug("role: %s", config["netbox"]["device"]["role"])
+    logging.debug("======================== Configuration.yaml variables end")
+
+
+def create_slug(name):
+    """Function to crete a slug from a name by replacing blank spaces with dashes
+    and making it all lowercases
+    """
+    return name.lower().replace(' ', '-')
 
 
 class ApiConnector:
@@ -43,7 +60,9 @@ class ApiConnector:
         logging.debug("Launching %s request to: %s", method.upper(), url)
         match method:
             case "GET":
-                response = requests.get(url, headers=headers, timeout=self.timeout, verify=self.ssl_verify)
+                response = requests.get(
+                    url, headers=headers, timeout=self.timeout, verify=self.ssl_verify
+                )
             case "POST":
                 response = requests.post(url, headers=headers, data=json.dumps(payload), timeout=self.timeout,
                                          verify=self.ssl_verify)
@@ -58,7 +77,10 @@ class ApiConnector:
                 raise requests.RequestException("Request Method not implemented")
 
         if response.status_code >= 400:
-            logging.warning("Request failed status code: %d -> message: %s", response.status_code, response.text)
+            logging.warning(
+                "Request failed status code: %d -> message: %s", response.status_code,
+                response.text
+            )
             return None
         elif "Content-Type" in response.headers and response.headers["Content-Type"] == "application/json":
             return response.json()

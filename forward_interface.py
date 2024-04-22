@@ -17,8 +17,46 @@ class ForwardAPI(ApiConnector):
                               ssl_verify=ssl_verify,
                               timeout=timeout)
         self.network_id = config["network_id"]
+        self.locations_query_id = config["nqe"]["locations_query_id"]
+        self.vendors_query_id = config["nqe"]["vendors_query_id"]
+        self.device_types_query_id = config["nqe"]["device_types_query_id"]
+        self.device_models_query_id = config["nqe"]["device_models_query_id"]
         self.devices_query_id = config["nqe"]["devices_query_id"]
         self.interfaces_query_id = config["nqe"]["interfaces_query_id"]
+
+    def get_locations(self, network_id=None, query_id=None) -> dict:
+        """Get Location list using Forward NQE API"""
+        if network_id is None:
+            network_id = self.network_id
+        if query_id is None:
+            query_id = self.locations_query_id
+        return self.run_nqe_query(query_id, network_id)
+
+    def get_vendors(self, network_id=None, query_id=None) -> dict:
+        """Get Vendor list using Forward NQE API"""
+        # Use network_id defined in the constructor
+        if network_id is None:
+            network_id = self.network_id
+        if query_id is None:
+            query_id = self.vendors_query_id
+        return self.run_nqe_query(query_id, network_id)
+
+    def get_device_types(self, network_id=None, query_id=None) -> dict:
+        """Get device types list using NQE API"""
+        # Use network_id defined in the constructor
+        if network_id is None:
+            network_id = self.network_id
+        if query_id is None:
+            query_id = self.device_types_query_id
+        return self.run_nqe_query(query_id, network_id)
+
+    def get_models(self, network_id=None, query_id=None) -> dict:
+        """Get device models list using NQE API"""
+        if network_id is None:
+            network_id = self.network_id
+        if query_id is None:
+            query_id = self.device_models_query_id
+        return self.run_nqe_query(query_id, network_id)
 
     def get_devices(self, network_id=None, query_id=None) -> dict:
         """Get device list using NQE API"""

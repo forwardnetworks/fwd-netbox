@@ -1,7 +1,15 @@
 ---
-# If set to True, the Python script asks for a confirmation to proceed with the devices and interfaces update in NetBox
-# If set to False, the script updates devices and interfaces in NetBox without asking for a confirmation
-interactive: False
+
+debug: False  # Set this to True or False based on your needs
+
+# By default, Forward adds and updates devices, adds interfaces, device types, sites, etc. to NetBox.
+# Set the following flags to False if you do not want Forward to add or update them
+add_sites: True            # Forward Locations
+add_manufacturers: True    # Forward Vendors
+add_device_roles: True     # Forward Device Types
+add_device_types: True     # Forward Models
+add_devices: True          # Forward Devices
+add_interfaces: True       # Forward Interfaces
 
 forward:
   host: <fwd Enterprise URL>                      # For SaaS deployment set it to https://fwd.app
@@ -10,6 +18,10 @@ forward:
                                                   # (e.g. https://fwd.app/?/search?networkId=170256)
   nqe:
     # Do not change the NQE query IDs below unless you want to use your own NQE Queries and Python script
+    locations_query_id: Q_23d466d43c0f28e3385298af599a0f8cdf821ed1
+    vendors_query_id: Q_5e19c5b3843a1bdd3c64811385b5a523b3449b8f
+    device_types_query_id: Q_b67cb42b0c5ff7fa6dd4aba2a86e820009606cba
+    device_models_query_id: Q_73db5611f878ba59626b8516b48000f8c637390f
     devices_query_id: FQ_837817437f52a25bcfb88fe2b789040af9d44daa
     interfaces_query_id: FQ_97bcba26a420b4ed948bbd5d9c628e17150979e7
 
@@ -17,6 +29,3 @@ netbox:
   host: <NetBox instance URL>
   # For details about NetBox API Tokens, refer to https://demo.netbox.dev/static/docs/rest-api/authentication/#tokens
   authentication: Token <auth token here>
-  device:
-    # NQE does not have the concept of Device Role. You need to create a Device Role in NetBox and add its ID here
-    role: <Role ID>
