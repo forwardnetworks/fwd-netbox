@@ -327,7 +327,9 @@ class NetboxAPI(ApiConnector):
         logging.debug(interfaces)
         for interface in interfaces:
             for existing_interface in existing_interfaces:
-                logging.debug("Device %s -> %s", interface["device"], existing_interface["device"]["id"])
+                # Uncomment the line below only if you are running into issues with interface mappings
+                # It's output is very verbose.
+                # logging.debug("Device %s -> %s", interface["device"], existing_interface["device"]["id"])
                 if (
                     interface["name"] == existing_interface["name"]
                     and interface["device"] == existing_interface["device"]["id"]
@@ -412,7 +414,19 @@ class NetboxAPI(ApiConnector):
         manufacturers = self._get_manufacturer_map_helper()
         logging.debug(f"NetBox Manufacturers: {manufacturers}")
         for entry in query:
-            entry["slug"] = create_slug(entry["slug"])
+            # slug transformation
+            if entry["slug"] is None:
+                entry["slug"] = "unknown"
+            else:
+                entry["slug"] = create_slug(entry["slug"])
+
+            # part_number transformation
+            if entry["part_number"] is None:
+                entry["part_number"] = "unknown"
+
+            # model transformation
+            if entry["model"] is None:
+                entry["model"] = "unknown"
 
             # Manufacturer transformation
             if entry["manufacturer"].lower() in manufacturers:
@@ -448,9 +462,12 @@ class NetboxAPI(ApiConnector):
             logging.debug(f"==> Device entry {entry}")
 
             # Device type transformation
-            entry["device_type"] = devices[entry["device_type"].lower()]
+            if entry["device_type"] is None:
+                entry["device_type"] = "unknown"
+            else:
+                entry["device_type"] = devices[entry["device_type"].lower()]
 
-            # Site transformation
+                # Site transformation
             entry["site"] = entry["site"].lower()
             if entry["site"] in sites.keys():
                 entry["site"] = sites[entry["site"]]
