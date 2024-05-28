@@ -18,12 +18,12 @@ forward:
                                                   # (e.g. https://fwd.app/?/search?networkId=170256)
   nqe:
     # Do not change the NQE query IDs below unless you want to use your own NQE Queries and Python script
-    locations_query_id: Q_23d466d43c0f28e3385298af599a0f8cdf821ed1
-    vendors_query_id: Q_5e19c5b3843a1bdd3c64811385b5a523b3449b8f
-    device_types_query_id: Q_b67cb42b0c5ff7fa6dd4aba2a86e820009606cba
-    device_models_query_id: Q_73db5611f878ba59626b8516b48000f8c637390f
+    device_models_query_id: FQ_b28e7cde85cd0ce72d08dc4ab92ba66d6067f4d4
+    device_types_query_id: FQ_64a3a84cd27d225e5dd22e44a7e8d2f98d513a44
+    vendors_query_id: FQ_dfa37b83121f84406e6da206365a4d4294f0ccaa
     devices_query_id: FQ_837817437f52a25bcfb88fe2b789040af9d44daa
     interfaces_query_id: FQ_97bcba26a420b4ed948bbd5d9c628e17150979e7
+    locations_query_id: FQ_7327e06da074e257fffe3b4968b8986c85dcd4e9
 
 netbox:
   host: <NetBox instance URL>
