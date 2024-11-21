@@ -4,7 +4,7 @@ from common import ApiConnector, logging, requests
 
 class ForwardAPI(ApiConnector):
     """Forward API implementation"""
-    def __init__(self, config, ssl_verify=True, timeout=30):
+    def __init__(self, config, ssl_verify=True):
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
@@ -15,7 +15,7 @@ class ForwardAPI(ApiConnector):
                               config["authentication"],
                               http_headers=headers,
                               ssl_verify=ssl_verify,
-                              timeout=timeout)
+                              timeout=config["timeout"])
         self.network_id = config["network_id"]
         self.locations_query_id = config["nqe"]["locations_query_id"]
         self.vendors_query_id = config["nqe"]["vendors_query_id"]

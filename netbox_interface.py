@@ -6,7 +6,7 @@ from common import ApiConnector, logging, create_slug
 class NetboxAPI(ApiConnector):
     """API implementation for Netbox"""
 
-    def __init__(self, config, ssl_verify=True, timeout=30):
+    def __init__(self, config, ssl_verify=True):
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
@@ -18,7 +18,7 @@ class NetboxAPI(ApiConnector):
                               config["authentication"],
                               http_headers=headers,
                               ssl_verify=ssl_verify,
-                              timeout=timeout)
+                              timeout=config["timeout"])
         self.speeds_types = {  # Static mapping of port speeds
             "SPEED_10MB":    "100base-tx",
             "SPEED_100MB":   "100base-tx",

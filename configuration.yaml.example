@@ -12,10 +12,13 @@ add_devices: True          # Forward Devices
 add_interfaces: True       # Forward Interfaces
 
 forward:
-  host: <fwd Enterprise URL>                      # For SaaS deployment set it to https://fwd.app
+  host: <fwd Enterprise URL>                      # Make sure to include the https:// prefix
+                                                  # For SaaS deployment set it to https://fwd.app
   authentication: Basic <basic auth b64enc here>  # For details, refer to https://fwd.app/api-doc#authentication
+                                                  # Make sure to keep the keyword Basic
   network_id: <Network id>                        # You can find the network_id in the Forward UI URL
                                                   # (e.g. https://fwd.app/?/search?networkId=170256)
+  timeout: 60                                     # Forward APIs timeout
   nqe:
     # Do not change the NQE query IDs below unless you want to use your own NQE Queries and Python script
     device_models_query_id: FQ_b28e7cde85cd0ce72d08dc4ab92ba66d6067f4d4
@@ -26,6 +29,8 @@ forward:
     locations_query_id: FQ_7327e06da074e257fffe3b4968b8986c85dcd4e9
 
 netbox:
-  host: <NetBox instance URL>
+  host: <NetBox instance URL>              # Make sure to include the https:// prefix
   # For details about NetBox API Tokens, refer to https://demo.netbox.dev/static/docs/rest-api/authentication/#tokens
-  authentication: Token <auth token here>
+  authentication: Token <auth token here>  # Make sure to keep the keyword Token before the actual token
+  timeout: 90                              # NetBox APIs timeout
+
