@@ -488,8 +488,8 @@ class NetboxAPI(ApiConnector):
         devices = self._get_interface_map_helper()
         for entry in query:
             entry["device"] = devices[entry["device"]]
-            entry["type"] = self.speeds_types[entry["type"]]
-            entry["speed"] = self.speed_to_int[entry["speed"]]
+            entry["type"] = self.speeds_types.get(entry["type"], self.speeds_types["SPEED_UNKNOWN"])
+            entry["speed"] = self.speed_to_int.get(entry["speed"], self.speed_to_int["SPEED_UNKNOWN"])
         return query
 
     def _get_paginated(self, original_path: str):
