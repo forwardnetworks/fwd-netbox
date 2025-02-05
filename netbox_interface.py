@@ -20,30 +20,17 @@ class NetboxAPI(ApiConnector):
                               ssl_verify=ssl_verify,
                               timeout=config["timeout"])
         self.speeds_types = {  # Static mapping of port speeds
-            "SPEED_10MB":    "100base-tx",
-            "SPEED_100MB":   "100base-tx",
-            "SPEED_1GB":     "1000base-t",
-            "SPEED_2500MB":  "2.5gbase-t",
-            "SPEED_5GB":     "5gbase-t",
-            "SPEED_10GB":    "10gbase-t",
-            "SPEED_25GB":    "25gbase-x-sfp28",
-            "SPEED_40GB":    "40gbase-x-qsfpp",
-            "SPEED_50GB":    "50gbase-x-sfp28",
-            "SPEED_100GB":   "100gbase-x-qsfp28",
-            "SPEED_UNKNOWN": "other"
-        }
-        self.speed_to_int = {
-            "SPEED_10MB":      10000,
-            "SPEED_100MB":    100000,
-            "SPEED_1GB":     1000000,
-            "SPEED_2500MB":  2500000,
-            "SPEED_5GB":     5000000,
-            "SPEED_10GB":   10000000,
-            "SPEED_25GB":   25000000,
-            "SPEED_40GB":   40000000,
-            "SPEED_50GB":   50000000,
-            "SPEED_100GB": 100000000,
-            "SPEED_UNKNOWN": 0
+            10:     "100base-tx",
+            100:    "100base-tx",
+            1000:   "1000base-t",
+            2500:   "2.5gbase-t",
+            5000:   "5gbase-t",
+            10000:  "10gbase-t",
+            25000:  "25gbase-x-sfp28",
+            40000:  "40gbase-x-qsfpp",
+            50000:  "50gbase-x-sfp28",
+            100000: "100gbase-x-qsfp28",
+            None: "other"
         }
         self.request_limit = 50  # Defaults to 50
 
@@ -489,7 +476,11 @@ class NetboxAPI(ApiConnector):
         for entry in query:
             entry["device"] = devices[entry["device"]]
             entry["type"] = self.speeds_types[entry["type"]]
-            entry["speed"] = self.speed_to_int[entry["speed"]]
+            if entry["speed"] is not None:
+                entry["speed"] *= 1000
+            else:
+                entry["speed"] = 0
+
         return query
 
     def _get_paginated(self, original_path: str):
