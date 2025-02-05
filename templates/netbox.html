@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YAML Config Generation Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)),
+                        url('/static/background.jpg') no-repeat center center/cover;
+            color: #333;
+        }
+        .container {
+            margin: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.8); /* White box with slight transparency */
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        form {
+            max-width: 600px;
+        }
+        label, input, textarea, button {
+            display: block;
+            margin: 10px 0;
+            width: 100%;
+        }
+        input, textarea, button {
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Configuration Form</h1>
+    <p>This form allows you to generate the <code>configuration.yaml</code> file used by the Python script.</p>
+
+    <form method="POST">
+
+        <h2>Data to Export into NetBox</h2>
+
+        <label for="add_sites">Sites:</label>
+        <input type="checkbox" id="add_sites" name="add_sites" value="true" {{ 'checked' if defaults['add_sites'] else '' }}>
+
+        <label for="add_manufacturers">Manufacturers:</label>
+        <input type="checkbox" id="add_manufacturers" name="add_manufacturers" value="true" {{ 'checked' if defaults['add_manufacturers'] else '' }}>
+
+        <label for="add_device_roles">Device Roles:</label>
+        <input type="checkbox" id="add_device_roles" name="add_device_roles" value="true" {{ 'checked' if defaults['add_device_roles'] else '' }}>
+
+        <label for="add_device_types">Device Types:</label>
+        <input type="checkbox" id="add_device_types" name="add_device_types" value="true" {{ 'checked' if defaults['add_device_types'] else '' }}>
+
+        <label for="add_devices">Devices:</label>
+        <input type="checkbox" id="add_devices" name="add_devices" value="true" {{ 'checked' if defaults['add_devices'] else '' }}>
+
+        <label for="add_interfaces">Interfaces:</label>
+        <input type="checkbox" id="add_interfaces" name="add_interfaces" value="true" {{ 'checked' if defaults['add_interfaces'] else '' }}>
+
+        <h2>Mandatory Fields</h2>
+
+        <label for="forward_host"><b>Forward Enterprise URL</b> (including http/https protocol; no trailer /):</label>
+        <input type="text" id="forward_host" name="forward_host" value="{{ defaults['forward_host'] }}">
+
+        <label for="forward_authentication"><b>Forward Authentication </b> (in base 64 format <a href="https://fwd.app/api-doc#authentication" target="_blank" rel="noopener noreferrer">Documentation</a>):</h2></label>
+        <input type="text" id="forward_authentication" name="forward_authentication" value="{{ defaults['forward_authentication'] }}">
+
+        <label for="forward_network_id"><b>Forward Network ID</b> (see instance URL. e.g. https://fwd.app/?/search?networkId=<span style="color: red;">169214</span>&snapshotId=771248):</label>
+        <input type="text" id="forward_network_id" name="forward_network_id" value="{{ defaults['forward_network_id'] }}">
+
+        <label for="netbox_host"><b>NetBox URL</b> (including http/https protocol):</label>
+        <input type="text" id="netbox_host" name="netbox_host" value="{{ defaults['netbox_host'] }}">
+
+        <label for="netbox_authentication"><b>NetBox Authentication Token</b> (<a href="https://demo.netbox.dev/static/docs/rest-api/authentication/" target="_blank" rel="noopener noreferrer">Documentation</a>):</label>
+        <input type="text" id="netbox_authentication" name="netbox_authentication" value="{{ defaults['netbox_authentication'] }}">
+
+        <h2>Optional Fields</h2>
+
+        <label for="debug"><b>Debug:</b> </label>
+            <input type="checkbox" id="debug" name="debug" value="true" {{ 'checked' if defaults['debug'] else '' }}>
+
+        <label for="forward_timeout"><b>Forward API Timeout:</b></label>
+        <input type="number" id="forward_timeout" name="forward_timeout" value="{{ defaults['forward_timeout'] }}">
+
+        <label for="netbox_timeout"><b>NetBox API Timeout:</b></label>
+        <input type="number" id="netbox_timeout" name="netbox_timeout" value="{{ defaults['netbox_timeout'] }}">
+
+        <h3>NQE Query IDs</h3>
+
+        <label for="nqe_device_models_query_id">Device Models Query ID:</label>
+        <input type="text" id="nqe_device_models_query_id" name="nqe_device_models_query_id" value="{{ defaults['nqe_device_models_query_id'] }}">
+
+        <label for="nqe_device_types_query_id">Device Type Query ID:</label>
+        <input type="text" id="nqe_device_types_query_id" name="nqe_device_types_query_id" value="{{ defaults['nqe_device_types_query_id'] }}">
+
+        <label for="nqe_vendors_query_id">Vendors Query ID:</label>
+        <input type="text" id="nqe_vendors_query_id" name="nqe_vendors_query_id" value="{{ defaults['nqe_vendors_query_id'] }}">
+
+        <label for="nqe_devices_query_id">Devices Query ID:</label>
+        <input type="text" id="nqe_devices_query_id" name="nqe_devices_query_id" value="{{ defaults['nqe_devices_query_id'] }}">
+
+        <label for="nqe_interfaces_query_id">Interfaces Query ID:</label>
+        <input type="text" id="nqe_interfaces_query_id" name="nqe_interfaces_query_id" value="{{ defaults['nqe_interfaces_query_id'] }}">
+
+        <label for="nqe_locations_query_id">Locations Query ID:</label>
+        <input type="text" id="nqe_locations_query_id" name="nqe_locations_query_id" value="{{ defaults['nqe_locations_query_id'] }}">
+
+        <button type="submit">Generate Configuration File <code>configuration.yaml</code></button>
+
+    </form>
+</body>
+</html>
