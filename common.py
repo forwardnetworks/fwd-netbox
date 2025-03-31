@@ -27,6 +27,8 @@ def print_variables(config):
     logging.debug("device_types_query_id: %s", config["forward"]["nqe"]["device_types_query_id"])
     logging.debug("device_models_query_id: %s", config["forward"]["nqe"]["device_models_query_id"])
     logging.debug("interfaces_query_id: %s", config["forward"]["nqe"]["interfaces_query_id"])
+    logging.debug("virtual_device_contexts_query_id: %s", config["forward"]["nqe"]["virtual_device_contexts_query_id"])
+    logging.debug("virtual_chassis_query_id: %s", config["forward"]["nqe"]["virtual_chassis_query_id"])
     logging.debug("NetBox:")
     logging.debug("host: %s", config["netbox"]["host"])
     logging.debug("authentication: %s", config["netbox"]["authentication"])
@@ -72,6 +74,9 @@ class ApiConnector:
             case "PUT":
                 response = requests.put(url, headers=headers, data=json.dumps(payload), timeout=self.timeout,
                                         verify=self.ssl_verify)
+            case "DELETE":
+                response = requests.delete(url, headers=headers, data=json.dumps(payload),timeout=self.timeout,
+                                    verify=self.ssl_verify)
             case _:
                 logging.warning("Method not implemented %s", method.upper())
                 raise requests.RequestException("Request Method not implemented")
@@ -97,6 +102,27 @@ class ApiConnector:
     def _post(self, path: str, payload, headers=None):
         """Generic POST request handler"""
         return self._request("POST", path, headers, payload)
+
+    def _bulkpost(self, path: str, payload_list: list):
+        """POST multiple items in chunks using self.post_limit"""
+        for i in range(0, len(payload_list), self.post_limit):
+            chunk = payload_list[i:i + self.post_limit]
+            logging.debug(f"POSTing chunk of {len(chunk)} items to {path}")
+            self._request("POST", path, self.http_headers, payload=chunk)
+
+    def _bulkpatch(self, path: str, payload_list: list):
+        """PATCH multiple items in chunks using self.post_limit"""
+        for i in range(0, len(payload_list), self.post_limit):
+            chunk = payload_list[i:i + self.post_limit]
+            logging.debug(f"PATCHing chunk of {len(chunk)} items to {path}")
+            self._request("PATCH", path, self.http_headers, payload=chunk)
+
+    def _bulkdelete(self, path: str, payload_list: list):
+        """DELETE multiple items in chunks using self.post_limit"""
+        for i in range(0, len(payload_list), self.post_limit):
+            chunk = payload_list[i:i + self.post_limit]
+            logging.debug(f"DELETEing chunk of {len(chunk)} items from {path}")
+            self._request("DELETE", path, self.http_headers, payload=chunk)
 
     def _patch(self, path: str, payload, headers=None):
         """Generic PATCH request handler"""

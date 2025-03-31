@@ -23,6 +23,9 @@ class ForwardAPI(ApiConnector):
         self.device_models_query_id = config["nqe"]["device_models_query_id"]
         self.devices_query_id = config["nqe"]["devices_query_id"]
         self.interfaces_query_id = config["nqe"]["interfaces_query_id"]
+        self.virtual_device_contexts_query_id = config["nqe"]["virtual_device_contexts_query_id"]
+        self.virtual_chassis_query_id = config["nqe"]["virtual_chassis_query_id"]
+        self.nqe_limit = config.get("nqe_limit", 1000)
 
     def get_locations(self, network_id=None, query_id=None) -> dict:
         """Get Location list using Forward NQE API"""
@@ -34,7 +37,6 @@ class ForwardAPI(ApiConnector):
 
     def get_vendors(self, network_id=None, query_id=None) -> dict:
         """Get Vendor list using Forward NQE API"""
-        # Use network_id defined in the constructor
         if network_id is None:
             network_id = self.network_id
         if query_id is None:
@@ -43,7 +45,6 @@ class ForwardAPI(ApiConnector):
 
     def get_device_types(self, network_id=None, query_id=None) -> dict:
         """Get device types list using NQE API"""
-        # Use network_id defined in the constructor
         if network_id is None:
             network_id = self.network_id
         if query_id is None:
@@ -60,7 +61,6 @@ class ForwardAPI(ApiConnector):
 
     def get_devices(self, network_id=None, query_id=None) -> dict:
         """Get device list using NQE API"""
-        # Use network_id defined in the constructor
         if network_id is None:
             network_id = self.network_id
         if query_id is None:
@@ -68,27 +68,64 @@ class ForwardAPI(ApiConnector):
         return self.run_nqe_query(query_id, network_id)
 
     def get_interfaces(self, network_id=None, query_id=None) -> dict:
-        """Get device list using NQE API"""
-        # Use network_id defined in the constructor
+        """Get interfaces list using NQE API"""
         if network_id is None:
             network_id = self.network_id
         if query_id is None:
             query_id = self.interfaces_query_id
         return self.run_nqe_query(query_id, network_id)
 
-    def run_nqe_query(self, query_id, network_id=None) -> dict:
-        """Execute query based on id"""
-        # Use network_id defined in the constructor
+    def get_virtual_device_contexts(self, network_id=None, query_id=None) -> dict:
+        """Get virtual device context list using Forward NQE API"""
+        if network_id is None:
+            network_id = self.network_id
+        if query_id is None:
+            query_id = self.virtual_device_contexts_query_id
+        return self.run_nqe_query(query_id, network_id)
+
+    def get_virtual_chassis(self, network_id=None, query_id=None) -> dict:
+        """Get virtual chassis list using Forward NQE API"""
+        if network_id is None:
+            network_id = self.network_id
+        if query_id is None:
+            query_id = self.virtual_chassis_query_id
+        return self.run_nqe_query(query_id, network_id)
+
+    def run_nqe_query(self, query_id, network_id=None) -> list:
+        """Execute a paginated NQE query and return all results"""
         if network_id is None:
             network_id = self.network_id
         snapshot_id = self.get_latest_snapshot(network_id)["id"]
         logging.debug("Running Forward NQE Query...")
-        data = {"queryId": query_id}
-        nqe_result = self._post(f"/api/nqe?snapshotId={snapshot_id}", data)
-        if nqe_result is not None:
-            return nqe_result["items"]
-        logging.debug(nqe_result)
-        raise requests.RequestException("Invalid response")
+
+        offset = 0
+        limit = 1000
+        total_items = None
+        all_items = []
+
+        while total_items is None or offset < total_items:
+            data = {
+                "queryId": query_id,
+                "queryOptions": {
+                    "offset": offset,
+                    "limit": limit
+                }
+            }
+
+            response = self._post(f"/api/nqe?snapshotId={snapshot_id}", data)
+            if response is None or "items" not in response:
+                logging.warning(f"No results from NQE at offset {offset}")
+                break
+
+            if total_items is None:
+                total_items = response.get("totalNumItems", 0)
+                logging.debug(f"NQE reported totalNumItems={total_items}")
+
+            all_items.extend(response["items"])
+            offset += limit
+
+        logging.info(f"Fetched {len(all_items)} items from NQE query {query_id}")
+        return all_items
 
     def get_latest_snapshot(self, network_id=None) -> dict:
         """Get latest snapshot id"""

@@ -1,9 +1,8 @@
+from flask import Flask, request, render_template
 import yaml
-from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-# Default values for the form
 default_values = {
     "debug": False,
     "add_sites": True,
@@ -12,6 +11,8 @@ default_values = {
     "add_device_types": True,
     "add_devices": True,
     "add_interfaces": True,
+    "add_virtual_device_contexts": True,
+    "add_virtual_chassis": True,
     "forward_host": "https://fwd.app",
     "forward_authentication": "<basic auth>",
     "forward_network_id": "123456",
@@ -25,8 +26,10 @@ default_values = {
     "netbox_host": "<URL>",
     "netbox_authentication": "<auth token>",
     "netbox_timeout": 90,
+    "request_limit": 50,
+    "post_limit": 100,
+    "allow_deletes": False
 }
-
 
 @app.route('/', methods=['GET', 'POST'])
 def form():
@@ -43,6 +46,8 @@ def form():
             "add_device_types": form_data.get("add_device_types") == "true",
             "add_devices": form_data.get("add_devices") == "true",
             "add_interfaces": form_data.get("add_interfaces") == "true",
+            "add_virtual_device_contexts": form_data.get("add_virtual_device_contexts") == "true",
+            "add_virtual_chassis": form_data.get("add_virtual_chassis") == "true",
             "forward": {
                 "host": form_data.get("forward_host"),
                 "authentication": "Basic " + form_data.get("forward_authentication"),
@@ -61,6 +66,9 @@ def form():
                 "host": form_data.get("netbox_host"),
                 "authentication": "Token " + form_data.get("netbox_authentication"),
                 "timeout": int(form_data.get("netbox_timeout", 90)),
+                "request_limit": int(form_data.get("request_limit", 50)),
+                "post_limit": int(form_data.get("post_limit", 100)),
+                "allow_deletes": form_data.get("allow_deletes") == "true"
             },
         }
 

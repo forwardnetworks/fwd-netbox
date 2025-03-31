@@ -10,6 +10,8 @@ add_device_roles: True     # Forward Device Types
 add_device_types: True     # Forward Models
 add_devices: True          # Forward Devices
 add_interfaces: True       # Forward Interfaces
+add_virtual_device_contexts: False # Forward Virtual Device Contexts
+add_virtual_chassis: False # Forward Virtual Chassis
 
 forward:
   host: <fwd Enterprise URL>                      # Make sure to include the https:// prefix
@@ -19,6 +21,7 @@ forward:
   network_id: <Network id>                        # You can find the network_id in the Forward UI URL
                                                   # (e.g. https://fwd.app/?/search?networkId=170256)
   timeout: 60                                     # Forward APIs timeout
+  nqe_limit: 100 # Forward NQE item per query run
   nqe:
     # Do not change the NQE query IDs below unless you want to use your own NQE Queries and Python script
     device_models_query_id: FQ_b28e7cde85cd0ce72d08dc4ab92ba66d6067f4d4
@@ -27,10 +30,14 @@ forward:
     devices_query_id: FQ_837817437f52a25bcfb88fe2b789040af9d44daa
     interfaces_query_id: FQ_97bcba26a420b4ed948bbd5d9c628e17150979e7
     locations_query_id: FQ_7327e06da074e257fffe3b4968b8986c85dcd4e9
+    virtual_device_contexts_query_id: FQ_7327e06da074e257fffe3b4968b8986c85dcd4e9
+    virtual_chassis_query_id: FQ_7327e06da074e257fffe3b4968b8986c85dcd4e9
 
 netbox:
   host: <NetBox instance URL>              # Make sure to include the https:// prefix
   # For details about NetBox API Tokens, refer to https://demo.netbox.dev/static/docs/rest-api/authentication/#tokens
   authentication: Token <auth token here>  # Make sure to keep the keyword Token before the actual token
-  timeout: 90                              # NetBox APIs timeout
-
+  timeout: 90 # NetBox APIs timeout
+  request_limit: 100 # NetBox request limit
+  post_limit: 1000 # NetBox per update limit
+  allow_deletes: False

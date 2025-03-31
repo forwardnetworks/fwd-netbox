@@ -131,6 +131,31 @@ def main():
     else:
         logging.info("========> Skipping NetBox Interface Update...")
 
+    if config.get("add_virtual_device_contexts", False):
+        logging.info("========> Updating NetBox Virtual Device Contexts...")
+        fwd_vdcs = forward.get_virtual_device_contexts()
+        logging.debug(f"Forward Virtual Device Contexts {fwd_vdcs}")
+        create_vdc_list, update_vdc_list = netbox.add_virtual_device_context_list(fwd_vdcs)
+
+        if len(create_vdc_list) > 0:
+            logging.info(f"========> {len(create_vdc_list)} virtual device context[s] added to NetBox")
+        if len(update_vdc_list) > 0:
+            logging.info(f"========> {len(update_vdc_list)} NetBox virtual device context[s] updated")
+    else:
+        logging.info("========> Skipping NetBox Virtual Device Contexts Update...")
+
+    if config.get("add_virtual_chassis", False):
+        logging.info("========> Updating NetBox Virtual Chassis...")
+        fwd_vcs = forward.get_virtual_chassis()
+        logging.debug(f"Forward Virtual Chassis {fwd_vcs}")
+        create_vcs_list, update_vcs_list = netbox.add_virtual_chassis_list(fwd_vcs)
+
+        if len(create_vcs_list) > 0:
+            logging.info(f"========> {len(create_vcs_list)} virtual chassis[s] added to NetBox")
+        if len(update_vcs_list) > 0:
+            logging.info(f"========> {len(update_vcs_list)} NetBox virtual chassis[s] updated")
+    else:
+        logging.info("========> Skipping NetBox Virtual Chassis Update...")
 
 if __name__ == "__main__":
     main()

@@ -32,7 +32,9 @@ class NetboxAPI(ApiConnector):
             100000: "100gbase-x-qsfp28",
             None: "other"
         }
-        self.request_limit = 50  # Defaults to 50
+        self.request_limit = config.get("post_limit", 50)  # Defaults to 50
+        self.post_limit = config.get("post_limit", 100)
+        self.allow_deletes = config.get("allow_deletes", False)# Chunk size for bulk POST/PATCH operations
 
     def get_manufacturers(self):
         """Get Manufacturers from netbox"""
@@ -66,6 +68,22 @@ class NetboxAPI(ApiConnector):
         """Get Interfaces using API"""
         logging.debug("Getting Interfaces from Netbox using API")
         response = self._get_paginated("/api/dcim/interfaces/")
+        if response is not None:
+            return response
+        raise ValueError("Received empty response")
+
+    def get_virtual_device_contexts(self) -> dict:
+        """Get Virtual Device Contexts from NetBox using API"""
+        logging.debug("Getting Virtual Device Contexts from NetBox...")
+        response = self._get_paginated("/api/dcim/virtual-device-contexts/")
+        if response is not None:
+            return response
+        raise ValueError("Received empty response")
+
+    def get_virtual_chassis(self) -> dict:
+        """Get Virtual Chassis from NetBox using API"""
+        logging.debug("Getting Virtual Chassis from NetBox...")
+        response = self._get_paginated("/api/dcim/virtual-chassis/")
         if response is not None:
             return response
         raise ValueError("Received empty response")
@@ -296,38 +314,107 @@ class NetboxAPI(ApiConnector):
         self._post("/api/dcim/interfaces/", interface)
 
     def patch_interfaces(self, interfaces):
-        """Patch an Interface in netbox"""
-        logging.debug("Patching NetBox interfaces...")
-        self._patch("/api/dcim/interfaces/", interfaces)
+        """PATCH interfaces in chunks using NetBox bulk PATCH API"""
+        logging.debug(f"Bulk PATCHing {len(interfaces)} interfaces")
+        self._bulkpatch("/api/dcim/interfaces/", interfaces)
 
     def add_interface_list(self, interfaces):
-        """Adds a list of interfaces, patches if already exists
-
-        Keyword arguments:
-        interfaces -- List of interfaces to add into Netbox.
-        """
-
+        """Adds a list of interfaces using chunked POST and PATCH"""
         logging.debug(f"Adding a list of {len(interfaces)} interfaces")
         existing_interfaces = self.get_interfaces()["results"]
         update_interfaces = []
         create_interfaces = []
-        logging.debug(interfaces)
+
         for interface in interfaces:
-            for existing_interface in existing_interfaces:
-                # Uncomment the line below only if you are running into issues with interface mappings
-                # It's output is very verbose.
-                # logging.debug("Device %s -> %s", interface["device"], existing_interface["device"]["id"])
+            for existing in existing_interfaces:
                 if (
-                    interface["name"] == existing_interface["name"]
-                    and interface["device"] == existing_interface["device"]["id"]
+                    interface["name"] == existing["name"]
+                    and interface["device"] == existing["device"]["id"]
                 ):
-                    interface["id"] = existing_interface["id"]
+                    interface["id"] = existing["id"]
                     update_interfaces.append(interface)
-        create_interfaces = [interface for interface in interfaces if "id" not in interface.keys()]
-        self.patch_interfaces(update_interfaces)
-        for interface in create_interfaces:
-            self.add_interface(interface)
+                    break
+
+        create_interfaces = [i for i in interfaces if "id" not in i]
+
+        if update_interfaces:
+            logging.info(f"Bulk PATCHing {len(update_interfaces)} interfaces...")
+            self.patch_interfaces(update_interfaces)
+
+        if create_interfaces:
+            logging.info(f"Bulk POSTing {len(create_interfaces)} interfaces...")
+            self._bulkpost("/api/dcim/interfaces/", create_interfaces)
+
         return create_interfaces, update_interfaces
+
+    def add_virtual_device_context(self, vdc):
+        """Add a Virtual Device Context to NetBox"""
+        logging.debug(f"Adding Virtual Device Context {vdc} to NetBox...")
+        self._post("/api/dcim/virtual-device-contexts/", vdc)
+
+    def patch_virtual_device_contexts(self, vdcs: list):
+            logging.debug("Patching Virtual Device Contexts in NetBox...")
+            self._patch("/api/dcim/virtual-device-contexts/", vdcs)
+
+    def add_virtual_device_context_list(self, vdcs):
+        """Adds a list of virtual device contexts, patches if already exists
+
+        Keyword arguments:
+        vdcs -- List of virtual device contexts to add into NetBox.
+        """
+        logging.debug(f"Adding a list of {len(vdcs)} virtual device contexts")
+        existing_vdcs = self.get_virtual_device_contexts()["results"]
+        update_vdcs = []
+        create_vdcs = []
+
+        for vdc in vdcs:
+            for existing_vdc in existing_vdcs:
+                if (
+                    vdc["name"] == existing_vdc["name"]
+                    and vdc["device"] == existing_vdc["device"]["id"]
+                ):
+                    vdc["id"] = existing_vdc["id"]
+                    update_vdcs.append(vdc)
+                    break  # Avoid duplicate updates
+
+        create_vdcs = [vdc for vdc in vdcs if "id" not in vdc.keys()]
+
+        self.patch_virtual_device_contexts(update_vdcs)
+
+        for vdc in create_vdcs:
+            self.add_virtual_device_context(vdc)
+
+        return create_vdcs, update_vdcs
+
+    def add_virtual_chassis(self, vc):
+        logging.debug(f"Adding Virtual Chassis {vc} to NetBox...")
+        self._post("/api/dcim/virtual-chassis/", vc)
+
+    def patch_virtual_chassis(self, vcs: list):
+        logging.debug("Patching Virtual Chassis in NetBox...")
+        self._patch("/api/dcim/virtual-chassis/", vcs)
+
+    def add_virtual_chassis_list(self, chassis_list):
+        logging.debug(f"Adding a list of {len(chassis_list)} virtual chassis")
+        existing_chassis = self.get_virtual_chassis()["results"]
+        update_chassis = []
+        create_chassis = []
+
+        for chassis in chassis_list:
+            for existing in existing_chassis:
+                if chassis["name"] == existing["name"]:
+                    chassis["id"] = existing["id"]
+                    update_chassis.append(chassis)
+                    break
+
+        create_chassis = [ch for ch in chassis_list if "id" not in ch]
+
+        self.patch_virtual_chassis(update_chassis)
+
+        for chassis in create_chassis:
+            self.add_virtual_chassis(chassis)
+
+        return create_chassis, update_chassis
 
     def _get_site_map_helper(self) -> dict:
         """Helper method that returns a dictionary of Sites and the id"""

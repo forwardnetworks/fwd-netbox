@@ -69,6 +69,12 @@
         <label for="add_interfaces">Interfaces:</label>
         <input type="checkbox" id="add_interfaces" name="add_interfaces" value="true" {{ 'checked' if defaults['add_interfaces'] else '' }}>
 
+        <label for="add_virtual_device_contexts">Virtual Device Contexts:</label>
+        <input type="checkbox" id="add_virtual_device_contexts" name="add_virtual_device_contexts" value="true" {{ 'checked' if defaults['add_virtual_device_contexts'] else '' }}>
+
+        <label for="add_virtual_chassis">Virtual Chassis:</label>
+        <input type="checkbox" id="add_virtual_chassis" name="add_virtual_chassis" value="true" {{ 'checked' if defaults['add_virtual_chassis'] else '' }}>
+
         <h2>Mandatory Fields</h2>
 
         <label for="forward_host"><b>Forward Enterprise URL</b> (including http/https protocol; no trailer /):</label>
@@ -94,8 +100,20 @@
         <label for="forward_timeout"><b>Forward API Timeout:</b></label>
         <input type="number" id="forward_timeout" name="forward_timeout" value="{{ defaults['forward_timeout'] }}">
 
+        <label for="forward_nqe_limit"><b>Forward NQE Limit:</b></label>
+        <input type="number" id="forward_nqe_limit" name="forward_nqe_limit" value="{{ defaults.get('forward_nqe_limit', 1000) }}">
+
         <label for="netbox_timeout"><b>NetBox API Timeout:</b></label>
         <input type="number" id="netbox_timeout" name="netbox_timeout" value="{{ defaults['netbox_timeout'] }}">
+
+        <label for="request_limit"><b>NetBox Request Limit:</b></label>
+        <input type="number" id="request_limit" name="request_limit" value="{{ defaults['request_limit'] }}">
+
+        <label for="post_limit"><b>NetBox Post Limit:</b></label>
+        <input type="number" id="post_limit" name="post_limit" value="{{ defaults['post_limit'] }}">
+
+        <label for="allow_deletes"><b>Allow Deletes:</b></label>
+        <input type="checkbox" id="allow_deletes" name="allow_deletes" value="true" {{ 'checked' if defaults['allow_deletes'] else '' }}>
 
         <h3>NQE Query IDs</h3>
 
@@ -116,6 +134,12 @@
 
         <label for="nqe_locations_query_id">Locations Query ID:</label>
         <input type="text" id="nqe_locations_query_id" name="nqe_locations_query_id" value="{{ defaults['nqe_locations_query_id'] }}">
+
+        <label for="nqe_virtual_device_contexts_query_id">Virtual Device Contexts Query ID:</label>
+        <input type="text" id="nqe_virtual_device_contexts_query_id" name="nqe_virtual_device_contexts_query_id" value="{{ defaults['nqe_virtual_device_contexts_query_id'] }}">
+
+        <label for="nqe_virtual_chassis_query_id">Virtual Chassis Query ID:</label>
+        <input type="text" id="nqe_virtual_chassis_query_id" name="nqe_virtual_chassis_query_id" value="{{ defaults['nqe_virtual_chassis_query_id'] }}">
 
         <button type="submit">Generate Configuration File <code>configuration.yaml</code></button>
 
