@@ -381,8 +381,9 @@ class NetboxAPI(ApiConnector):
 
         self.patch_virtual_device_contexts(update_vdcs)
 
-        for vdc in create_vdcs:
-            self.add_virtual_device_context(vdc)
+        if create_vdcs:
+            logging.info(f"Bulk POSTing {len(create_vdcs)} new VDCs to NetBox...")
+            self._bulkpost("/api/dcim/virtual-device-contexts/", create_vdcs)
 
         return create_vdcs, update_vdcs
 
@@ -464,6 +465,24 @@ class NetboxAPI(ApiConnector):
             device_types[result["display"].lower()] = result["id"]
         logging.debug(f"====== NetBox Device Types List: {device_types}")
         return device_types
+
+    def _get_virtual_device_context_map_helper(self) -> dict:
+        """Helper method to map VDC name to (parent device ID, VDC ID)"""
+        results = self.get_virtual_device_contexts()
+        vdc_map = {}
+
+        if results is None:
+            logging.warning("No virtual device contexts found.")
+            return {}
+
+        for vdc in results["results"]:
+            name = vdc["name"]
+            vdc_id = vdc["id"]
+            parent_device_id = vdc["device"]["id"] if isinstance(vdc["device"], dict) else vdc["device"]
+            vdc_map[name] = (parent_device_id, vdc_id)
+
+        logging.debug(f"[VDC Map Helper] Resolved VDC map: {vdc_map}")
+        return vdc_map
 
     def _get_interface_map_helper(self) -> dict:
         """Helper method that returns a dictionary of Devices and the id"""
@@ -557,12 +576,47 @@ class NetboxAPI(ApiConnector):
 
         return query
 
+    def adapt_forward_virtual_device_context_query(self, query):
+         """Helper method to convert a Forward VDC query into a NetBox-compatible format"""
+         devices = self._get_interface_map_helper()
+         for entry in query:
+             if entry["device"] in devices:
+                 entry["device"] = devices[entry["device"]]
+             else:
+                 logging.warning(f"Device {entry['device']} not found in NetBox. Skipping ID resolution.")
+         return query
+
     def adapt_forward_interface_query(self, query):
-        """Helper method to convert an interface forward query into a Netbox Query"""
-        devices = self._get_interface_map_helper()
+        """Helper method to convert an interface forward query into a NetBox-compatible format"""
+        raw_device_map = self._get_interface_map_helper()  # device_name -> device_id
+        raw_vdc_map = self._get_virtual_device_context_map_helper()  # vdc_name -> (parent_device_id, vdc_id)
+
+        # Normalize keys to lowercase for lookup
+        device_map = {k.lower(): v for k, v in raw_device_map.items()}
+        vdc_map = {k.lower(): v for k, v in raw_vdc_map.items()}
+
         for entry in query:
-            entry["device"] = devices[entry["device"]]
-            entry["type"] = self.speeds_types[entry["type"]]
+            original_device_name = entry["device"]
+            lookup_name = original_device_name.lower()
+
+            if lookup_name in device_map:
+                # Regular device
+                entry["device"] = device_map[lookup_name]
+
+            elif lookup_name in vdc_map:
+                # VDC — use parent device and add vdc ID list
+                parent_device_id, vdc_id = vdc_map[lookup_name]
+                entry["device"] = parent_device_id
+                entry["vdcs"] = [vdc_id]
+
+            else:
+                logging.warning(f"[Interface Adapt] Device or VDC '{original_device_name}' not found in NetBox. Skipping.")
+                continue
+
+            # Interface type normalization
+            entry["type"] = self.speeds_types.get(entry["type"], "other")
+
+            # Speed conversion
             if entry["speed"] is not None:
                 entry["speed"] *= 1000
             else:

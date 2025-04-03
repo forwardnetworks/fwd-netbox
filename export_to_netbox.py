@@ -1,161 +1,137 @@
 #!/usr/bin/env python3
 """Demo script for integrating Forward Enterprise with Netbox."""
+
 from yaml import load
 try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Loader
-from common import logging, print_variables
+
+from common import logging, print_variables, setup_loggers, loggers
 from netbox_interface import NetboxAPI
 from forward_interface import ForwardAPI
 
-
 CONFIG_FILE = "configuration.yaml"
-
 
 def main():
     """Main function"""
-    # Import variables from file
     with open(CONFIG_FILE, "r", encoding="UTF-8") as f:
         config = load(f, Loader=Loader)
 
+    setup_loggers(config)
+
     if config["debug"]:
-        logging.getLogger().setLevel(logging.DEBUG)  # Set the logging level to DEBUG if the debug flag is True
+        logging.getLogger().setLevel(logging.DEBUG)
         print_variables(config)
     else:
-        logging.getLogger().setLevel(logging.INFO)  # Otherwise, set it to INFO
+        logging.getLogger().setLevel(logging.INFO)
 
     forward = ForwardAPI(config["forward"])
     netbox = NetboxAPI(config["netbox"])
 
-    if config["add_sites"]:
+    if config.get("add_sites"):
         logging.info("========> Updating NetBox Sites...")
-        # Forward Locations are mapped to NetBox Sites
+        log = loggers.get("sites", logging)
         forward_locations = forward.get_locations()
-        logging.debug(forward_locations)
+        log.debug(forward_locations)
         create_sites_list, update_sites_list = netbox.add_site_list(forward_locations)
-
-        if len(create_sites_list) > 0:
-            logging.info(f"{len(create_sites_list)} site[s] added to NetBox")
-            for site in create_sites_list:
-                logging.info(site["name"])
-        if len(update_sites_list) > 0:
-            logging.info(f"{len(update_sites_list)}  NetBox site[s] updated")
-            for site in update_sites_list:
-                logging.info(site["name"])
+        for site in create_sites_list:
+            log.info(f"Added site: {site['name']}")
+        for site in update_sites_list:
+            log.info(f"Updated site: {site['name']}")
     else:
         logging.info("========> Skipping NetBox Sites Update...")
 
-    if config["add_manufacturers"]:
+    if config.get("add_manufacturers"):
         logging.info("========> Updating NetBox Manufacturers...")
+        log = loggers.get("manufacturers", logging)
         fwd_vendors = forward.get_vendors()
-        logging.debug(f"Forward Vendors {fwd_vendors}")
+        log.debug(fwd_vendors)
         fwd_vendors_adapted = netbox.adapt_forward_vendor_query(fwd_vendors)
-        logging.debug(f"NetBox devices {fwd_vendors_adapted}")
         create_manufacturers_list = netbox.add_manufacturer_list(fwd_vendors_adapted)
-
-        if len(create_manufacturers_list):
-            logging.info(f"========> {len(create_manufacturers_list)} manufacturer[s] added to NetBox")
-            for manufacturer in create_manufacturers_list:
-                logging.info(manufacturer["name"])
-        else:
-            logging.info("========> NetBox Manufacturers is up-to-date")
+        for m in create_manufacturers_list:
+            log.info(f"Added manufacturer: {m['name']}")
     else:
         logging.info("========> Skipping NetBox Manufacturers Update...")
 
-    if config["add_device_roles"]:
+    if config.get("add_device_roles"):
         logging.info("========> Updating NetBox Device Roles...")
+        log = loggers.get("roles", logging)
         fwd_device_types = forward.get_device_types()
-        logging.debug(f"Forward Device Types {fwd_device_types}")
+        log.debug(fwd_device_types)
         fwd_device_types_adapted = netbox.adapt_forward_device_type_query(fwd_device_types)
-        logging.debug(f"NetBox devices {fwd_device_types_adapted}")
         create_roles_list = netbox.add_role_list(fwd_device_types_adapted)
-
-        if len(create_roles_list):
-            logging.info(f"========> {len(create_roles_list)} device roles[s] added to NetBox")
-            for role in create_roles_list:
-                logging.info(role["name"])
-        else:
-            logging.info("========> NetBox Device Roles is up-to-date")
+        for role in create_roles_list:
+            log.info(f"Added role: {role['name']}")
     else:
         logging.info("========> Skipping NetBox Device Roles Update...")
 
-    if config["add_device_types"]:
+    if config.get("add_device_types"):
         logging.info("========> Updating NetBox Device Types...")
+        log = loggers.get("device_types", logging)
         fwd_models = forward.get_models()
-        logging.debug(f"Forward Device Models {fwd_models}")
+        log.debug(fwd_models)
         fwd_models_adapted = netbox.adapt_forward_model_query(fwd_models)
-        logging.debug(f"NetBox devices types {fwd_models_adapted}")
         create_device_types_list = netbox.add_device_type_list(fwd_models_adapted)
-
-        if len(create_device_types_list):
-            logging.info(f"========> {len(create_device_types_list)} device types[s] added to NetBox")
-            for device_type in create_device_types_list:
-                logging.info(device_type["model"])
-        else:
-            logging.info("========> NetBox Device Types is up-to-date")
+        for dt in create_device_types_list:
+            log.info(f"Added device type: {dt['model']}")
     else:
         logging.info("========> Skipping NetBox Device Types Update...")
 
-    if config["add_devices"]:
+    if config.get("add_devices"):
         logging.info("========> Updating NetBox Devices...")
+        log = loggers.get("devices", logging)
         fwd_devices = forward.get_devices()
-        logging.debug(f"Forward Devices {fwd_devices}")
+        log.debug(fwd_devices)
         fwd_devices_adapted = netbox.adapt_forward_device_query(fwd_devices)
-        logging.debug(f"NetBox devices {fwd_devices_adapted}")
         create_devices_list, update_devices_list = netbox.add_device_list(fwd_devices_adapted)
-
-        if len(create_devices_list):
-            logging.info(f"========> {len(create_devices_list)} device[s] added to NetBox")
-            for device in create_devices_list:
-                logging.info(device["name"])
-        if len(update_devices_list) > 0:
-            logging.info(f"========> {len(update_devices_list)} NetBox device[s] updated")
-            for device in update_devices_list:
-                logging.info(device["name"])
+        for d in create_devices_list:
+            log.info(f"Added device: {d['name']}")
+        for d in update_devices_list:
+            log.info(f"Updated device: {d['name']}")
     else:
         logging.info("========> Skipping NetBox Device Update...")
 
-    if config["add_interfaces"]:
-        logging.info("========> Updating NetBox Interfaces...")
-        fwd_interfaces = forward.get_interfaces()
-        logging.debug(f"Forward Devices {fwd_interfaces}")
-        fwd_interfaces_adapted = netbox.adapt_forward_interface_query(fwd_interfaces)
-        logging.debug(f"NetBox devices {fwd_interfaces_adapted}")
-        create_interfaces_list, update_interfaces_list = netbox.add_interface_list(fwd_interfaces_adapted)
-
-        if len(create_interfaces_list) > 0:
-            logging.info(f"========> {len(create_interfaces_list)} interface[s] added to NetBox")
-        if len(update_interfaces_list) > 0:
-            logging.info(f"========> {len(update_interfaces_list)} NetBox interface[s] updated")
-    else:
-        logging.info("========> Skipping NetBox Interface Update...")
-
-    if config.get("add_virtual_device_contexts", False):
+    if config.get("add_virtual_device_contexts"):
         logging.info("========> Updating NetBox Virtual Device Contexts...")
+        log = loggers.get("vdcs", logging)
         fwd_vdcs = forward.get_virtual_device_contexts()
-        logging.debug(f"Forward Virtual Device Contexts {fwd_vdcs}")
-        create_vdc_list, update_vdc_list = netbox.add_virtual_device_context_list(fwd_vdcs)
-
-        if len(create_vdc_list) > 0:
-            logging.info(f"========> {len(create_vdc_list)} virtual device context[s] added to NetBox")
-        if len(update_vdc_list) > 0:
-            logging.info(f"========> {len(update_vdc_list)} NetBox virtual device context[s] updated")
+        log.debug(fwd_vdcs)
+        adapted_vdcs = netbox.adapt_forward_virtual_device_context_query(fwd_vdcs)
+        create_vdc_list, update_vdc_list = netbox.add_virtual_device_context_list(adapted_vdcs)
+        for v in create_vdc_list:
+            log.info(f"Added VDC: {v['name']}")
+        for v in update_vdc_list:
+            log.info(f"Updated VDC: {v['name']}")
     else:
         logging.info("========> Skipping NetBox Virtual Device Contexts Update...")
 
-    if config.get("add_virtual_chassis", False):
+    if config.get("add_virtual_chassis"):
         logging.info("========> Updating NetBox Virtual Chassis...")
+        log = loggers.get("virtual_chassis", logging)
         fwd_vcs = forward.get_virtual_chassis()
-        logging.debug(f"Forward Virtual Chassis {fwd_vcs}")
+        log.debug(fwd_vcs)
         create_vcs_list, update_vcs_list = netbox.add_virtual_chassis_list(fwd_vcs)
-
-        if len(create_vcs_list) > 0:
-            logging.info(f"========> {len(create_vcs_list)} virtual chassis[s] added to NetBox")
-        if len(update_vcs_list) > 0:
-            logging.info(f"========> {len(update_vcs_list)} NetBox virtual chassis[s] updated")
+        for vc in create_vcs_list:
+            log.info(f"Added chassis: {vc['name']}")
+        for vc in update_vcs_list:
+            log.info(f"Updated chassis: {vc['name']}")
     else:
         logging.info("========> Skipping NetBox Virtual Chassis Update...")
+
+    if config.get("add_interfaces"):
+        logging.info("========> Updating NetBox Interfaces...")
+        log = loggers.get("interfaces", logging)
+        fwd_interfaces = forward.get_interfaces()
+        log.debug(fwd_interfaces)
+        fwd_interfaces_adapted = netbox.adapt_forward_interface_query(fwd_interfaces)
+        create_interfaces_list, update_interfaces_list = netbox.add_interface_list(fwd_interfaces_adapted)
+        for iface in create_interfaces_list:
+            log.info(f"Added interface: {iface['name']}")
+        for iface in update_interfaces_list:
+            log.info(f"Updated interface: {iface['name']}")
+    else:
+        logging.info("========> Skipping NetBox Interface Update...")
 
 if __name__ == "__main__":
     main()
