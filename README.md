@@ -1,5 +1,12 @@
+# ⚠️ Deprecated Repository
 
-# Forward Enterprise and NetBox
+This repository is **Obsolete / Deprecated** and should not be used.
+
+## ✅ Recommended Alternative
+
+Please use the actively maintained repository instead:
+
+👉 https://github.com/forwardnetworks/forward-netbox
 
 ## Forward Enterprise
 
